@@ -480,13 +480,24 @@ def do_aperio_svs(filename):
         accept(filename, 'SVS')
 
         # Find and delete label
+        deleted_label = False
+        deleted_macro = False
         for directory in fh.directories:
             lines = directory.entries[IMAGE_DESCRIPTION].value().splitlines()
             if len(lines) >= 2 and lines[1].startswith('label '):
                 directory.delete(expected_prefix=LZW_CLEARCODE)
-                break
-        else:
+                deleted_label = True
+                continue
+            if len(lines) >= 2 and lines[1].startswith('macro '):
+                directory.delete(expected_prefix=JPEG_SOI)
+                # directory.delete()
+                deleted_macro = True
+                continue
+
+        if deleted_label is False:
             raise IOError("No label in SVS file")
+        if deleted_macro is False:
+            raise IOError("No macro in SVS file")
 
 
 def do_hamamatsu_ndpi(filename):
