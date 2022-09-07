@@ -508,12 +508,27 @@ def do_hamamatsu_ndpi(filename):
         accept(filename, 'NDPI')
 
         # Find and delete macro image
-        for directory in fh.directories:
+        macro_deleted = False
+        label_deleted = False
+
+        for directory in list(fh.directories):
+            if directory.entries[NDPI_SOURCELENS].value()[0] == -2:
+                print("deleting label")
+                directory.delete() # the prefix may not be known
+                label_deleted = True
+                continue
             if directory.entries[NDPI_SOURCELENS].value()[0] == -1:
+                print("deleting macro")
                 directory.delete(expected_prefix=JPEG_SOI)
-                break
-        else:
-            raise IOError("No label in NDPI file")
+                macro_deleted = True
+                continue
+
+        if not macro_deleted:
+            print("No macro found in NDPI file")
+        if not label_deleted:
+            print("No label found in NDPI file")
+        if (not macro_deleted) or (not label_deleted):
+            raise IOError("One or more layers already deleted (see previous errors)")
 
 
 def do_3dhistech_mrxs(filename):
